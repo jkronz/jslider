@@ -210,6 +210,9 @@
 		if( this.settings.onstatechange && $.isFunction( this.settings.onstatechange ) )
 		  this.onstatechange = this.settings.onstatechange;
 
+    if( this.settings.validate && $.isFunction( this.settings.validate ) )
+      this.validate = this.settings.validate;
+
     this.is = {
       init: false
     };
@@ -221,7 +224,10 @@
   jSlider.prototype.onstatechange = function(){
     
   };
-  
+
+  jSlider.prototype.validate = function() {
+      return true;
+  };
   jSlider.prototype.create = function(){
     var $this = this;
     
@@ -385,9 +391,9 @@
   
   jSlider.prototype.redraw = function( pointer ){
     if( !this.is.init ) return false;
-    
+
+
     this.setValue();
-    
     // redraw range line
     if( this.o.pointers[0] && this.o.pointers[1] )
       this.o.value.css({ left: this.o.pointers[0].value.prc + "%", width: ( this.o.pointers[1].value.prc - this.o.pointers[0].value.prc ) + "%" });
@@ -536,12 +542,15 @@
 
   jSlider.prototype.getValue = function(){
     if(!this.is.init) return false;
+
+
     var $this = this;
     
     var value = "";
     $.each( this.o.pointers, function(i){
       if( this.value.prc != undefined && !isNaN(this.value.prc) ) value += (i > 0 ? ";" : "") + $this.prcToValue( this.value.prc );
     });
+
     return value;
   };
 
@@ -689,12 +698,17 @@
 	};
 	
 	jSliderPointer.prototype._set = function( prc, opt_origin ){
-	  if( !opt_origin )
-	    this.value.origin = this.parent.prcToValue(prc);
-
+	  if( !opt_origin ) {
+      this.value.origin = this.parent.prcToValue(prc);
+    }
+    var currentValue = this.value.prc;
 	  this.value.prc = prc;
-		this.ptr.css({ left: prc + "%" });
-	  this.parent.redraw(this);
+    if (this.parent.getValue() && !this.parent.validate(this.parent.getValue())) {
+      this.value.prc = currentValue;
+    } else {
+      this.ptr.css({ left: this.value.prc + "%" });
+	    this.parent.redraw(this);
+    }
 	};
   
 })(jQuery);
